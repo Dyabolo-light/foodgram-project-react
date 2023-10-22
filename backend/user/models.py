@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-# from rest_framework_simplejwt.tokens import RefreshToken
 
 USER = 'user'
 ADMIN = 'admin'
@@ -21,7 +20,6 @@ class CustomUser(AbstractUser):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     password = models.CharField(max_length=150)
-#    confirmation_code = models.CharField(max_length=100)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -31,12 +29,6 @@ class CustomUser(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
-    # def tokens(self):
-    #     refresh = RefreshToken.for_user(self)
-    #     return ({
-    #         'refresh': str(refresh),
-    #         'access': str(refresh.access_token),
-    #     })
 
     @property
     def is_admin(self):
