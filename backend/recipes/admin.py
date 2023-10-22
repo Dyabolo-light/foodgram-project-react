@@ -5,9 +5,9 @@ from .models import (Cart, Favourite, Follow, Ingredient, IngredientsInRecipe,
 
 
 class IngredientsInline(admin.TabularInline):
-   model = Recipe.ingredient.through
-   extra = 0
-   min_num = 1
+    model = Recipe.ingredient.through
+    extra = 0
+    min_num = 1
 
 
 class TagAdmin(admin.ModelAdmin):
