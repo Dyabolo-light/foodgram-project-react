@@ -66,8 +66,9 @@ class IngredientsInRecipe(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
-                name='recipe_ingredient')]
+            fields=['recipe', 'ingredient'],
+            name='recipe_ingredient')
+        ]
 
     def __str__(self):
         return f'{self.ingredient} {self.amount}'
