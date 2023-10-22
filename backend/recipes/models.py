@@ -2,7 +2,6 @@ from django.db import models
 from django.db.models.constraints import UniqueConstraint
 
 from user.models import CustomUser
-# from .validators import validate_score, validate_year
 
 
 class Tag(models.Model):
@@ -28,47 +27,67 @@ class Recipe(models.Model):
         verbose_name='Название рецепта',
         max_length=256)
     cooking_time = models.IntegerField(verbose_name='Время приготовления')
-    description = models.TextField()
-    tag = models.ForeignKey(
-        Tag, on_delete=models.SET_NULL,
+    text = models.TextField()
+    tags = models.ManyToManyField(
+        Tag,
         related_name='recipes',
         verbose_name='Тег',
-        blank=True, null=True)
+    )
     ingredient = models.ManyToManyField(
-        Ingredient, related_name='recipes',
+        Ingredient,
+        through='IngredientsInRecipe',
+        related_name='recipes',
         verbose_name='Ингредиент',
         blank=False)
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор')
+    image = models.ImageField(
+        verbose_name='Картинка рецепта',
+        upload_to='media/', default='default.jpg')
+    pub_date = models.DateTimeField(
+        verbose_name='Дата публикации',
+        auto_now_add=True)
 
     def __str__(self):
         return self.name
 
-#    class Meta:
-#        verbose_name = 'Произведение'
-#        verbose_name_plural = 'Произведения'
-#        indexes = [models.Index(fields=['year']),
-#                   models.Index(fields=['name'])]
+
+class IngredientsInRecipe(models.Model):
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
+        related_name='ingredients_in_recipe',
+        verbose_name='Название рецепта')
+    ingredient = models.ForeignKey(
+        Ingredient, on_delete=models.CASCADE,
+        verbose_name='Ингредиент')
+    amount = models.IntegerField(verbose_name='Количество')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='recipe_ingredient')]
+
+    def __str__(self):
+        return f'{self.ingredient} {self.amount}'
 
 
-class Favorite(models.Model):
+class Favourite(models.Model):
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        # related_name='follower',
-        # verbose_name='Подписчик'
-    )
+        related_name='favourite',
+        verbose_name='Пользователь')
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        # related_name='following',
-        # verbose_name='Автор'
-    )
+        related_name='favourite',
+        verbose_name='Рецепт')
 
     class Meta:
-        unique_together = ('user', 'recipe')
+        constraints = [UniqueConstraint(fields=['user', 'recipe'],
+                                        name='unique_favourite')]
 
 
 class Follow(models.Model):
@@ -86,48 +105,16 @@ class Follow(models.Model):
     )
 
     class Meta:
-        UniqueConstraint(fields=['user', 'author'], name='unique_follower')
+        constraints = [UniqueConstraint(fields=['user', 'author'],
+                                        name='user_author')]
 
 
-# class Review(models.Model):
-#    text = models.TextField(verbose_name='Текст отзыва')
-#    pub_date = models.DateTimeField(verbose_name='Дата публикации',
-#                                    auto_now_add=True)
-#    author = models.ForeignKey(CustomUser,
-#                               on_delete=models.CASCADE,
-#                               related_name='reviews',
-#                               verbose_name='Автор')
-#    title = models.ForeignKey(
-#        Title, on_delete=models.CASCADE,
-#        related_name='reviews',
-#        verbose_name='Произведение',
-#        null=True)
-#    score = models.IntegerField(
-#        verbose_name='Оценка',
-#        validators=[validate_score])
+class Cart(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             related_name='shopping_cart')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               related_name='shopping_cart')
 
-#    class Meta:
-#        constraints = [
-#            models.UniqueConstraint(
-#                fields=['author', 'title'],
-#                name='title_author_review'
-#            )
-#        ]
-
-#    def __str__(self):
-#        return self.text
-
-
-# class Comment(models.Model):
-#    author = models.ForeignKey(
-#        CustomUser, on_delete=models.CASCADE,
-#        related_name='comments',
-#        verbose_name='Автор')
-#    review = models.ForeignKey(
-#        Review, on_delete=models.CASCADE,
-#        related_name='comments',
-#        verbose_name='Отзыв')
-#    text = models.TextField(verbose_name='Текст')
-#    pub_date = models.DateTimeField(
-#        verbose_name='Дата публикации',
-#        auto_now_add=True)
+    class Meta:
+        constraints = [UniqueConstraint(fields=['user', 'recipe'],
+                                        name='unique_cart')]

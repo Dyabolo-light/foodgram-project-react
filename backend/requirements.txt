@@ -11,6 +11,7 @@ cryptography==38.0.4
 defusedxml==0.7.1
 distro==1.8.0
 Django==3.2.19
+django-extra-fields==3.0.2
 django-filter==23.1
 django-guardian==2.4.0
 djangorestframework==3.14.0
