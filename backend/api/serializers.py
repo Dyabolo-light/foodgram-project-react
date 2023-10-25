@@ -3,7 +3,6 @@ from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Cart, Favourite, Follow, Ingredient,
                             IngredientsInRecipe, Recipe, Tag)
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 from user.models import CustomUser
 
 
@@ -201,8 +200,24 @@ class CartSerializer(serializers.ModelSerializer):
             raise ValidationError('Ингредиенты уже в корзине')
         return data
 
+    def to_representation(self, instance):
+        return RecipesByFollowingSerializer(instance.recipe,
+                                            context=self.context).data
+
 
 class FavouriteSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Favourite
         fields = ('user', 'recipe')
+
+    def validate(self, data):
+        if Favourite.objects.filter(
+            user=data['user'], recipe=data['recipe']
+        ).exists():
+            raise ValidationError('Рецепт уже добавлен в избранное')
+        return data
+
+    def to_representation(self, instance):
+        return RecipesByFollowingSerializer(instance.recipe,
+                                            context=self.context).data

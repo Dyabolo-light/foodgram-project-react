@@ -1,11 +1,11 @@
 from api.filters import IngredientSearchFilter, RecipeFilter
 from api.paginators import BasePaginator
 from api.permissions import IsAuthorOrAdminOrReadOnly
-from api.serializers import (FollowSerializer, IngredientSerializer,
-                             RecipeReadSerializer,
-                             RecipesByFollowingSerializer,
-                             RecipeWriteSerializer, TagSerializer,
-                             UserSerializer, SubscribeSerializer)
+from api.serializers import (CartSerializer, FavouriteSerializer,
+                             FollowSerializer, IngredientSerializer,
+                             RecipeReadSerializer, RecipeWriteSerializer,
+                             SubscribeSerializer, TagSerializer,
+                             UserSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -79,19 +79,15 @@ class RecipeViewSet(ModelViewSet):
         detail=True,
         methods=['POST', 'DELETE'],
         permission_classes=[IsAuthenticated, ],
-        serializer_class=RecipesByFollowingSerializer
+        serializer_class=FavouriteSerializer
     )
     def favorite(self, request, pk):
         recipe = self.get_object()
         if request.method == 'POST':
-            # if Favourite.objects.filter(
-            #         recipe=recipe, user=self.request.user
-            # ).exists():
-            #     return Response(
-            #         {'Error message': 'Рецепт уже есть в избранном'},
-            #         status=status.HTTP_400_BAD_REQUEST)
-            Favourite.objects.create(recipe=recipe, user=self.request.user)
-            serializer = self.get_serializer(recipe)
+            serializer = self.get_serializer(data={'recipe': recipe.id,
+                                                   'user': request.user.id})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         Favourite.objects.filter(recipe=recipe,
                                  user=self.request.user).delete()
@@ -101,20 +97,15 @@ class RecipeViewSet(ModelViewSet):
         detail=True,
         methods=['POST', 'DELETE'],
         permission_classes=[IsAuthenticated, ],
-        serializer_class=RecipesByFollowingSerializer
+        serializer_class=CartSerializer
     )
     def shopping_cart(self, request, pk):
         recipe = self.get_object()
         if request.method == 'POST':
-            # if Cart.objects.filter(
-            #         recipe=recipe, user=self.request.user
-            # ).exists():
-            #     return Response(
-            #         {'Error message': 'Рецепт уже есть в списке покупок'},
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
-            Cart.objects.create(recipe=recipe, user=self.request.user)
-            serializer = self.get_serializer(recipe)
+            serializer = self.get_serializer(data={'recipe': recipe.id,
+                                                   'user': request.user.id})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         Cart.objects.filter(recipe=recipe, user=self.request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
