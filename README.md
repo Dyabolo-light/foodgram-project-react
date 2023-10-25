@@ -29,7 +29,7 @@ sudo apt-get install docker-compose-plugin
 ```
 Проверьте, что Doker работает (```sudo systemctl status docker```).
 
-На сервере создайте папку для проекта (```mkdir foodgram```) и файл с переменными окружения .env (```touch .env```).
+На сервере создайте папку для проекта (```mkdir foodgram```) и в ней файл с переменными окружения .env (```touch .env```).
 
 В файле .env необходимо указать следующую информацию:
 ```
