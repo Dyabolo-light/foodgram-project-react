@@ -1,11 +1,13 @@
 # Проект Foodgram
 Foodgram — сайт, на котором пользователи могут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок». Он позволяет создавать список продуктов, которые нужно купить для приготовления выбранных блюд, а затем осуществлять его выгрузку в формате .txt.
-
 Проект состоит из бэкенд-приложения на Django и фронтенд-приложения на React.
+Данный проект доступен по адресу ```https://foodgramyadiploma.hopto.org/```.
+Спецификация проекта доступна по адресу ```https://foodgramyadiploma.hopto.org/api/docs/redoc.html```.
+Данные для входа в admin зону: 
+пользователь admin@mail.ru 
+пароль admin
 
-Данный проект доступен по адресу ```https://foodgramyadiploma.hopto.org/```
-
-# Установка
+## Установка
 Клонировать репозиторий на свой компьютер:
 ```
 git clone git@github.com:Dyabolo-light/foodgram-project-react.git
@@ -47,4 +49,20 @@ scp -r infra/* <server user>@<server IP>:/home/<server user>/foodgram/
 Для запуска сайте необходимо ввести в терминале сервера следующую команду:
 ```
 sudo docker compose up -d
+```
+Для выполнения миграций необходимо ввести в терминале сервера следующую команду:
+```
+sudo docker compose exec backend python manage.py migrate
+```
+Для создания суперпользователя необходимо ввести в терминале сервера следующую команду:
+```
+sudo docker compose exec backend python manage.py createsuperuser
+```
+Для сбора статики необходимо ввести в терминале сервера следующую команду:
+```
+sudo docker compose exec backend python manage.py collectstatic --noinput
+```
+Для удобства работы с сайтом можно скачать подготовленную базу с ингредиентами следующей командой:
+```
+sudo docker compose exec backend python manage.py pull_ingredients
 ```
