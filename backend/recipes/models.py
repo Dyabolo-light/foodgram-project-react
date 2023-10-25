@@ -1,6 +1,5 @@
 from django.db import models
-from django.db.models.constraints import UniqueConstraint
-
+from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from user.models import CustomUser
 
 
@@ -106,8 +105,12 @@ class Follow(models.Model):
     )
 
     class Meta:
-        constraints = [UniqueConstraint(fields=['user', 'author'],
-                                        name='user_author')]
+        constraints = [
+            UniqueConstraint(fields=['user', 'author'],
+                             name='unique_user_author'),
+            CheckConstraint(check=~models.Q(user=models.F('author')),
+                            name='users_cannot_follow_themselves')
+        ]
 
 
 class Cart(models.Model):

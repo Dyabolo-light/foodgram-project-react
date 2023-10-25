@@ -1,10 +1,9 @@
+from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
+from recipes.models import (Cart, Favourite, Follow, Ingredient,
+                            IngredientsInRecipe, Recipe, Tag)
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-
-from recipes.models import (Favourite, Ingredient, IngredientsInRecipe,
-                            Tag, Cart)
-from recipes.models import Follow, Recipe
 from user.models import CustomUser
 
 
@@ -77,12 +76,6 @@ class FollowSerializer(UserSerializer):
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'recipes', 'recipes_count')
         model = CustomUser
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=['user', 'following']
-            )
-        ]
 
     def get_recipes(self, obj):
         queryset = Recipe.objects.filter(author=obj)
@@ -129,6 +122,25 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         self.add_tags_ingredients(ingredients, tags, recipe)
         return recipe
 
+    def validate(self, data):
+        tags = data.get('tags')
+        ingredients = data.get('ingredients')
+        if not tags:
+            raise ValidationError('Выберите тэги')
+
+        if not ingredients:
+            raise ValidationError('Добавьте ингредиенты')
+
+        if len(tags) != len(set(tags)):
+            raise ValidationError('Тэги должны быть уникальны')
+        set_ingredients = set()
+        for ingredient in ingredients:
+            set_ingredients.add(ingredient.get('id'))
+        if len(set_ingredients) != len(ingredients):
+            raise ValidationError('Ингредиенты должны быть уникальны')
+
+        return data
+
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     author = UserSerializer()
@@ -157,3 +169,31 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         if not user.is_anonymous:
             return Cart.objects.filter(recipe=obj).exists()
         return False
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ('user', 'author')
+
+    def validate(self, data):
+        if Follow.objects.filter(
+            author=data['author'], user=data['user']
+        ).exists():
+            raise ValidationError('Вы уже подписаны на этого автора')
+        if data['author'] == data['user']:
+            raise ValidationError('Нельзя подписаться на себя')
+        return data
+
+    def to_representation(self, instance):
+        return FollowSerializer(instance.author, context=self.context).data
+
+
+class CartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cart
+
+
+class FavouriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favourite
