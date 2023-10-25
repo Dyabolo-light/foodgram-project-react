@@ -124,7 +124,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         tags = data.get('tags')
-        ingredients = data.get('ingredients')
+        ingredients = data.get('ingredients_in_recipe')
         if not tags:
             raise ValidationError('Выберите тэги')
 
@@ -192,8 +192,17 @@ class SubscribeSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
+        fields = ('user', 'recipe')
+
+    def validate(self, data):
+        if Cart.objects.filter(
+            user=data['user'], recipe=data['recipe']
+        ).exists():
+            raise ValidationError('Ингредиенты уже в корзине')
+        return data
 
 
 class FavouriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favourite
+        fields = ('user', 'recipe')
