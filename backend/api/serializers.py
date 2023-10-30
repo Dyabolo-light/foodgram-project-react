@@ -1,3 +1,5 @@
+import re
+
 from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Cart, Favourite, Follow, Ingredient,
@@ -7,6 +9,10 @@ from user.models import CustomUser
 
 
 class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=True, max_length=150)
+    first_name = serializers.CharField(required=True, max_length=150)
+    last_name = serializers.CharField(required=True, max_length=150)
+    email = serializers.EmailField(required=True, max_length=150)
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -22,6 +28,19 @@ class UserSerializer(serializers.ModelSerializer):
         if not user.is_anonymous:
             return Follow.objects.filter(user=user, author=obj).exists()
         return False
+
+    def validate(self, data):
+        username = data.get('username')
+        email = data.get('email')
+        if username == 'me':
+            raise ValidationError('Имя пользователя "me" недопустимо')
+        if not re.match(r"[\w.@+-]+\Z", username):
+            raise ValidationError('Недопустимое имя пользователя')
+        if CustomUser.objects.filter(username=username):
+            raise ValidationError('Пользователь с таким именем уже существует')
+        if CustomUser.objects.filter(email=email):
+            raise ValidationError('Пользователь с таким email уже существует')
+        return data
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -91,7 +110,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         many=True)
     ingredients = AddIngredientSerializer(many=True,
                                           source='ingredients_in_recipe')
-    image = Base64ImageField()
+    image = Base64ImageField(required=True)
 
     class Meta:
         model = Recipe
@@ -124,16 +143,21 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def validate(self, data):
         tags = data.get('tags')
         ingredients = data.get('ingredients_in_recipe')
+        image = data.get('image')
+        if data.get('cooking_time') < 1:
+            raise ValidationError('Постой, Шумахер! Увеличьте время готовки')
         if not tags:
             raise ValidationError('Выберите тэги')
-
         if not ingredients:
             raise ValidationError('Добавьте ингредиенты')
-
+        if not image:
+            raise ValidationError('Добавьте картинку')
         if len(tags) != len(set(tags)):
             raise ValidationError('Тэги должны быть уникальны')
         set_ingredients = set()
         for ingredient in ingredients:
+            if ingredient.get('amount') < 1:
+                raise ValidationError('Добавьте немного ингредиентов')
             set_ingredients.add(ingredient.get('id'))
         if len(set_ingredients) != len(ingredients):
             raise ValidationError('Ингредиенты должны быть уникальны')

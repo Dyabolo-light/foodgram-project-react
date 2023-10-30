@@ -24,7 +24,7 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     name = models.CharField(
         verbose_name='Название рецепта',
-        max_length=256)
+        max_length=200)
     cooking_time = models.IntegerField(verbose_name='Время приготовления')
     text = models.TextField()
     tags = models.ManyToManyField(
@@ -44,7 +44,8 @@ class Recipe(models.Model):
         verbose_name='Автор')
     image = models.ImageField(
         verbose_name='Картинка рецепта',
-        upload_to='media/', default='default.jpg')
+        upload_to='media/', blank=False, null=False)
+        # default='default.jpg')
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
         auto_now_add=True)

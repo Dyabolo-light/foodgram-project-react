@@ -31,7 +31,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 
 class CartAdmin(admin.ModelAdmin):
-    list_display = ('user', 'recipe')
+    list_display = ('id', 'user', 'recipe')
     list_filter = ('user',)
     search_fields = ('user',)
 

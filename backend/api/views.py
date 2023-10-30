@@ -1,16 +1,10 @@
-from api.filters import IngredientSearchFilter, RecipeFilter
-from api.paginators import BasePaginator
-from api.permissions import IsAuthorOrAdminOrReadOnly
-from api.serializers import (CartSerializer, FavouriteSerializer,
-                             FollowSerializer, IngredientSerializer,
-                             RecipeReadSerializer, RecipeWriteSerializer,
-                             SubscribeSerializer, TagSerializer,
-                             UserSerializer)
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
+from rest_framework.exceptions import ValidationError
+
 from recipes.models import (Cart, Favourite, Follow, Ingredient,
                             IngredientsInRecipe, Recipe, Tag)
 from rest_framework import filters, status
@@ -18,6 +12,16 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+
+from api.filters import IngredientSearchFilter, RecipeFilter
+from api.mixins import OnlyViewSet
+from api.paginators import BasePaginator
+from api.permissions import IsAuthorOrAdminOrReadOnly
+from api.serializers import (CartSerializer, FavouriteSerializer,
+                             FollowSerializer, IngredientSerializer,
+                             RecipeReadSerializer, RecipeWriteSerializer,
+                             SubscribeSerializer, TagSerializer,
+                             UserSerializer)
 from user.models import CustomUser
 
 
@@ -107,6 +111,9 @@ class RecipeViewSet(ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if not Cart.objects.filter(recipe=recipe, user=self.request.user):
+            raise ValidationError('Рецепт отсутствует в корзине. Сперва '
+                                  'добавьте его туда')
         Cart.objects.filter(recipe=recipe, user=self.request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -136,13 +143,13 @@ class RecipeViewSet(ModelViewSet):
         return response
 
 
-class TagViewSet(ModelViewSet):
+class TagViewSet(OnlyViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
 
 
-class IngredientViewSet(ModelViewSet):
+class IngredientViewSet(OnlyViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)

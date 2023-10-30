@@ -17,12 +17,12 @@ class CustomUser(AbstractUser):
                               null=False)
     username = models.CharField(max_length=150, unique=True)
     role = models.CharField(max_length=15, choices=ROLES, default=USER)
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
+    first_name = models.CharField(max_length=150, blank=False, null=False)
+    last_name = models.CharField(max_length=150, blank=False, null=False)
     password = models.CharField(max_length=150)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'password']
 
     class Meta:
         ordering = ['id']
@@ -31,7 +31,7 @@ class CustomUser(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == self.ADMIN or self.is_superuser
+        return self.role == 'ADMIN' or self.is_superuser
 
     def __str__(self):
         return self.username
