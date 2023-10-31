@@ -6,6 +6,8 @@ from recipes.models import (Cart, Favourite, Follow, Ingredient,
                             IngredientsInRecipe, Recipe, Tag)
 from rest_framework import serializers
 from user.models import CustomUser
+from djoser.serializers import (
+    UserCreateSerializer as DjoserUserCreateSerializer)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -29,18 +31,13 @@ class UserSerializer(serializers.ModelSerializer):
             return Follow.objects.filter(user=user, author=obj).exists()
         return False
 
-    def validate(self, data):
-        username = data.get('username')
-        email = data.get('email')
+
+class UserCreateSerializer(DjoserUserCreateSerializer):
+    def validate_username(self, username):
+        print(username)
         if username == 'me':
             raise ValidationError('Имя пользователя "me" недопустимо')
-        if not re.match(r"[\w.@+-]+\Z", username):
-            raise ValidationError('Недопустимое имя пользователя')
-        if CustomUser.objects.filter(username=username):
-            raise ValidationError('Пользователь с таким именем уже существует')
-        if CustomUser.objects.filter(email=email):
-            raise ValidationError('Пользователь с таким email уже существует')
-        return data
+        return username
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -96,7 +93,8 @@ class FollowSerializer(UserSerializer):
         model = CustomUser
 
     def get_recipes(self, obj):
-        queryset = Recipe.objects.filter(author=obj)
+        recipes_limit = int(self.context['request'].GET.get('recipes_limit', 3))
+        queryset = Recipe.objects.filter(author=obj)[:recipes_limit]
         serializer = RecipesByFollowingSerializer(queryset, many=True)
         return serializer.data
 
@@ -163,6 +161,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise ValidationError('Ингредиенты должны быть уникальны')
 
         return data
+
+    def to_representation(self, instance):
+        return RecipeReadSerializer(instance, context=self.context).data
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):

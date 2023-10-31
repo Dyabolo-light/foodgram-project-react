@@ -32,6 +32,11 @@ class UserViewSet(DjoserUserViewSet):
     pagination_class = BasePaginator
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
+    def get_permissions(self):
+        if self.action == 'me':
+            return (IsAuthenticated(),)
+        return super().get_permissions()
+
     @action(
         detail=True,
         methods=['post', 'delete'],

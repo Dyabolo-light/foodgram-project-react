@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
 USER = 'user'
@@ -15,7 +16,10 @@ ROLES = (
 class CustomUser(AbstractUser):
     email = models.EmailField(max_length=254, unique=True, blank=False,
                               null=False)
-    username = models.CharField(max_length=150, unique=True)
+    username = models.CharField(
+        max_length=150, unique=True,
+        validators=[UnicodeUsernameValidator()]
+    )
     role = models.CharField(max_length=15, choices=ROLES, default=USER)
     first_name = models.CharField(max_length=150, blank=False, null=False)
     last_name = models.CharField(max_length=150, blank=False, null=False)
