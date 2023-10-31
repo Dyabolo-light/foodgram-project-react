@@ -81,6 +81,8 @@ DJOSER = {
         'user_create': 'api.serializers.UserCreateSerializer'
     },
 }
+APPEND_SLASH = False
+
 
 AUTH_USER_MODEL = 'user.CustomUser'
 
