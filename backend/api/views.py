@@ -1,13 +1,10 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework.exceptions import ValidationError
-
-from recipes.models import (Cart, Favourite, Follow, Ingredient,
-                            IngredientsInRecipe, Recipe, Tag)
 from rest_framework import filters, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -22,6 +19,8 @@ from api.serializers import (CartSerializer, FavouriteSerializer,
                              RecipeReadSerializer, RecipeWriteSerializer,
                              SubscribeSerializer, TagSerializer,
                              UserSerializer)
+from recipes.models import (Cart, Favourite, Follow, Ingredient,
+                            IngredientsInRecipe, Recipe, Tag)
 from user.models import CustomUser
 
 

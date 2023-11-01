@@ -1,5 +1,3 @@
-import re
-
 from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Cart, Favourite, Follow, Ingredient,
@@ -93,7 +91,9 @@ class FollowSerializer(UserSerializer):
         model = CustomUser
 
     def get_recipes(self, obj):
-        recipes_limit = int(self.context['request'].GET.get('recipes_limit', 3))
+        recipes_limit = int(
+            self.context['request'].GET.get('recipes_limit', 3)
+        )
         queryset = Recipe.objects.filter(author=obj)[:recipes_limit]
         serializer = RecipesByFollowingSerializer(queryset, many=True)
         return serializer.data

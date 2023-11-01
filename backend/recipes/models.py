@@ -45,7 +45,6 @@ class Recipe(models.Model):
     image = models.ImageField(
         verbose_name='Картинка рецепта',
         upload_to='media/', blank=False, null=False)
-        # default='default.jpg')
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
         auto_now_add=True)
