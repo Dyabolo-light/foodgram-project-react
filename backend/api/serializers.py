@@ -1,11 +1,16 @@
+import re
+
 from django.core.exceptions import ValidationError
+from djoser.serializers import (
+    UserCreateSerializer as DjoserUserCreateSerializer
+)
 from drf_extra_fields.fields import Base64ImageField
+
+from foodgram.settings import RECIPES_LIMIT
 from recipes.models import (Cart, Favourite, Follow, Ingredient,
                             IngredientsInRecipe, Recipe, Tag)
 from rest_framework import serializers
 from user.models import CustomUser
-from djoser.serializers import (
-    UserCreateSerializer as DjoserUserCreateSerializer)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -32,7 +37,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
     def validate_username(self, username):
-        print(username)
+        if not re.match(r'[\w.@+-]+\Z', username):
+            raise ValidationError(
+                'Имя пользователя содержит недопустимые символы'
+            )
         if username == 'me':
             raise ValidationError('Имя пользователя "me" недопустимо')
         return username
@@ -92,7 +100,7 @@ class FollowSerializer(UserSerializer):
 
     def get_recipes(self, obj):
         recipes_limit = int(
-            self.context['request'].GET.get('recipes_limit', 3)
+            self.context['request'].GET.get('recipes_limit', RECIPES_LIMIT)
         )
         queryset = Recipe.objects.filter(author=obj)[:recipes_limit]
         serializer = RecipesByFollowingSerializer(queryset, many=True)
@@ -200,14 +208,14 @@ class SubscribeSerializer(serializers.ModelSerializer):
         model = Follow
         fields = ('user', 'author')
 
-    def validate(self, data):
+    def validate_author(self, author):
         if Follow.objects.filter(
-            author=data['author'], user=data['user']
+            author=author, user=self.context.get('request').user
         ).exists():
             raise ValidationError('Вы уже подписаны на этого автора')
-        if data['author'] == data['user']:
+        if author == self.context.get('request').user:
             raise ValidationError('Нельзя подписаться на себя')
-        return data
+        return author
 
     def to_representation(self, instance):
         return FollowSerializer(instance.author, context=self.context).data

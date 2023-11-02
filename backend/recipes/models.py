@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from user.models import CustomUser
@@ -25,7 +26,9 @@ class Recipe(models.Model):
     name = models.CharField(
         verbose_name='Название рецепта',
         max_length=200)
-    cooking_time = models.IntegerField(verbose_name='Время приготовления')
+    cooking_time = models.IntegerField(
+        verbose_name='Время приготовления',
+        blank=False)
     text = models.TextField()
     tags = models.ManyToManyField(
         Tag,
@@ -49,8 +52,15 @@ class Recipe(models.Model):
         verbose_name='Дата публикации',
         auto_now_add=True)
 
+    class Meta:
+        ordering = ['-pub_date']
+
     def __str__(self):
         return self.name
+
+    def clean(self):
+        if not self.cooking_time or self.cooking_time < 0:
+            raise ValidationError('Нельзя приготовить блюдо мгновенно')
 
 
 class IngredientsInRecipe(models.Model):
@@ -68,6 +78,11 @@ class IngredientsInRecipe(models.Model):
             fields=['recipe', 'ingredient'],
             name='recipe_ingredient')
         ]
+
+    def clean(self):
+        if not self.amount or self.amount < 0:
+            raise ValidationError('Количество ингредиентов не может быть '
+                                  'меньше 0')
 
     def __str__(self):
         return f'{self.ingredient} {self.amount}'
