@@ -82,6 +82,19 @@ class RecipeViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def add_object(self, model, user, pk):
+        recipe = self.get_object()
+        serializer = self.get_serializer(data={'recipe': recipe.id,
+                                               'user': self.request.user.id})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete_object(self, model, user, pk):
+        recipe = self.get_object()
+        model.objects.filter(recipe=recipe, user=self.request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(
         detail=True,
         methods=['POST', 'DELETE'],
@@ -89,16 +102,9 @@ class RecipeViewSet(ModelViewSet):
         serializer_class=FavouriteSerializer
     )
     def favorite(self, request, pk):
-        recipe = self.get_object()
         if request.method == 'POST':
-            serializer = self.get_serializer(data={'recipe': recipe.id,
-                                                   'user': request.user.id})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        Favourite.objects.filter(recipe=recipe,
-                                 user=self.request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return self.add_object(Favourite, request.user, pk)
+        return self.delete_object(Favourite, request.user, pk)
 
     @action(
         detail=True,
@@ -107,18 +113,9 @@ class RecipeViewSet(ModelViewSet):
         serializer_class=CartSerializer
     )
     def shopping_cart(self, request, pk):
-        recipe = self.get_object()
         if request.method == 'POST':
-            serializer = self.get_serializer(data={'recipe': recipe.id,
-                                                   'user': request.user.id})
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if not Cart.objects.filter(recipe=recipe, user=self.request.user):
-            raise ValidationError('Рецепт отсутствует в корзине. Сперва '
-                                  'добавьте его туда')
-        Cart.objects.filter(recipe=recipe, user=self.request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return self.add_object(Cart, request.user, pk)
+        return self.delete_object(Cart, request.user, pk)
 
     @action(
         detail=False,
